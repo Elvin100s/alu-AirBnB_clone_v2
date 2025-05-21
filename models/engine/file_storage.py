@@ -1,87 +1,71 @@
 #!/usr/bin/python3
-"""Test cases for file_storage.py"""
-import unittest
-import os
+"""Defines the FileStorage class for file storage."""
 import json
 from models.base_model import BaseModel
-from models.engine.file_storage import FileStorage
-from models import storage
+from models.user import User
+from models.state import State
+from models.city import City
+from models.place import Place
+from models.amenity import Amenity
+from models.review import Review
 
-class TestFileStorage(unittest.TestCase):
-    """Test the FileStorage class"""
+classes = {
+    'BaseModel': BaseModel,
+    'User': User,
+    'State': State,
+    'City': City,
+    'Place': Place,
+    'Amenity': Amenity,
+    'Review': Review
+}
 
-    def setUp(self):
-        """Set up test environment"""
-        self.storage = FileStorage()
+class FileStorage:
+    """Serializes instances to a JSON file and deserializes back to instances."""
+
+    __file_path = "file.json"
+    __objects = {}
+
+    def all(self, cls=None):
+        """Returns the dictionary __objects or filtered by class."""
+        if cls:
+            filtered = {}
+            for key, obj in self.__objects.items():
+                if isinstance(obj, cls):
+                    filtered[key] = obj
+            return filtered
+        return self.__objects
+
+    def new(self, obj):
+        """Sets in __objects the obj with key <obj class name>.id."""
+        if obj:
+            key = "{}.{}".format(obj.__class__.__name__, obj.id)
+            self.__objects[key] = obj
+
+    def save(self):
+        """Serializes __objects to the JSON file (path: __file_path)."""
+        serialized = {k: v.to_dict() for k, v in self.__objects.items()}
+        with open(self.__file_path, 'w') as f:
+            json.dump(serialized, f)
+
+    def reload(self):
+        """Deserializes the JSON file to __objects."""
         try:
-            os.remove("file.json")
+            with open(self.__file_path, 'r') as f:
+                data = json.load(f)
+                for key, value in data.items():
+                    cls_name = value['__class__']
+                    if cls_name in classes:
+                        self.__objects[key] = classes[cls_name](**value)
         except FileNotFoundError:
             pass
-        FileStorage._FileStorage__objects = {}
 
-    def tearDown(self):
-        """Clean up after tests"""
-        try:
-            os.remove("file.json")
-        except FileNotFoundError:
-            pass
+    def delete(self, obj=None):
+        """Delete obj from __objects if it's inside."""
+        if obj:
+            key = "{}.{}".format(obj.__class__.__name__, obj.id)
+            if key in self.__objects:
+                del self.__objects[key]
 
-    def test_all_returns_dict(self):
-        """Test that all returns a dictionary"""
-        self.assertIsInstance(self.storage.all(), dict)
-
-    def test_new_adds_object(self):
-        """Test that new adds an object to storage"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        key = "BaseModel.{}".format(obj.id)
-        self.assertIn(key, self.storage.all())
-
-    def test_save_creates_file(self):
-        """Test that save creates a file"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.storage.save()
-        self.assertTrue(os.path.exists("file.json"))
-
-    def test_reload_loads_objects(self):
-        """Test that reload loads objects from file"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.storage.save()
-        self.storage.reload()
-        key = "BaseModel.{}".format(obj.id)
-        self.assertIn(key, self.storage.all())
-
-    def test_delete_removes_object(self):
-        """Test that delete removes an object"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        key = "BaseModel.{}".format(obj.id)
-        self.storage.delete(obj)
-        self.assertNotIn(key, self.storage.all())
-
-    def test_reload_empty_file(self):
-        """Test reload with empty file"""
-        with open("file.json", "w") as f:
-            f.write("{}")
-        self.storage.reload()
-        self.assertEqual(len(self.storage.all()), 0)
-
-    def test_reload_nonexistent_file(self):
-        """Test reload with nonexistent file"""
-        if os.path.exists("file.json"):
-            os.remove("file.json")
-        self.assertEqual(self.storage.reload(), None)
-
-    def test_multiple_objects(self):
-        """Test storage with multiple objects"""
-        objs = [BaseModel() for _ in range(3)]
-        for obj in objs:
-            self.storage.new(obj)
-        self.storage.save()
-        self.storage.reload()
-        self.assertEqual(len(self.storage.all()), 3)
-
-if __name__ == '__main__':
-    unittest.main()
+    def close(self):
+        """Call reload() method for deserializing the JSON file to objects."""
+        self.reload()
