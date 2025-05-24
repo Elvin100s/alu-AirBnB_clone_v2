@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """Defines the FileStorage class."""
 import json
+from datetime import datetime
 from models.base_model import BaseModel
 from models.user import User
 from models.state import State
@@ -20,52 +21,59 @@ classes = {
 }
 
 class FileStorage:
-    """Serializes instances to a JSON file and deserializes back to instances"""
+    """Serializes instances to JSON file and deserializes back"""
     
     __file_path = "file.json"
     __objects = {}
 
     def all(self, cls=None):
-        """Returns a dictionary of all objects or filtered by class"""
+        """Returns dictionary of all objects or filtered by class"""
         if cls:
-            filtered = {}
-            for key, obj in self.__objects.items():
-                if isinstance(obj, cls):
-                    filtered[key] = obj
-            return filtered
-        return self.__objects
+            return {k: v for k, v in self.__objects.items() 
+                   if isinstance(v, cls)}
+        return self.__objects.copy()
 
     def new(self, obj):
-        """Sets in __objects the obj with key <obj class name>.id"""
+        """Adds object to __objects dictionary"""
         if obj:
             key = "{}.{}".format(obj.__class__.__name__, obj.id)
             self.__objects[key] = obj
 
     def save(self):
-        """Serializes __objects to the JSON file"""
-        serialized = {k: v.to_dict() for k, v in self.__objects.items()}
+        """Serializes __objects to JSON file"""
+        serialized = {}
+        for key, obj in self.__objects.items():
+            serialized[key] = obj.to_dict()
         with open(self.__file_path, 'w') as f:
             json.dump(serialized, f)
 
     def reload(self):
-        """Deserializes the JSON file to __objects"""
+        """Deserializes JSON file to __objects"""
         try:
             with open(self.__file_path, 'r') as f:
                 data = json.load(f)
                 for key, value in data.items():
                     cls_name = value['__class__']
                     if cls_name in classes:
-                        self.__objects[key] = classes[cls_name](**value)
-        except FileNotFoundError:
+                        obj = classes[cls_name](**value)
+                        # Handle datetime attributes
+                        if 'created_at' in value:
+                            obj.created_at = datetime.strptime(
+                                value['created_at'], '%Y-%m-%dT%H:%M:%S.%f')
+                        if 'updated_at' in value:
+                            obj.updated_at = datetime.strptime(
+                                value['updated_at'], '%Y-%m-%dT%H:%M:%S.%f')
+                        self.__objects[key] = obj
+        except (FileNotFoundError, json.JSONDecodeError):
             pass
 
     def delete(self, obj=None):
-        """Delete obj from __objects if it exists"""
+        """Deletes obj from __objects if it exists"""
         if obj:
             key = "{}.{}".format(obj.__class__.__name__, obj.id)
             if key in self.__objects:
                 del self.__objects[key]
 
     def close(self):
-        """Call reload() method for deserializing the JSON file"""
+        """Calls reload() method"""
         self.reload()
