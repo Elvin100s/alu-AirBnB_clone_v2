@@ -1,19 +1,15 @@
 #!/usr/bin/python3
-"""Defines the BaseModel class that all other classes will inherit from."""
+"""Defines the BaseModel class."""
 import uuid
 from datetime import datetime
 import models
 from sqlalchemy import Column, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
-# Set up SQLAlchemy Base if using DB storage
-if models.storage_type == 'db':
-    Base = declarative_base()
-else:
-    Base = object
+Base = declarative_base()
 
 class BaseModel:
-    """The BaseModel class from which all other classes will inherit"""
+    """The BaseModel class from which future classes will be derived"""
     
     if models.storage_type == 'db':
         id = Column(String(60), primary_key=True, nullable=False)
@@ -28,12 +24,9 @@ class BaseModel:
         
         if kwargs:
             for key, value in kwargs.items():
-                if key == 'created_at' or key == 'updated_at':
-                    # Handle both string and datetime inputs
-                    if isinstance(value, str):
-                        value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
-                    setattr(self, key, value)
-                elif key != '__class__':
+                if key in ['created_at', 'updated_at']:
+                    value = datetime.strptime(value, '%Y-%m-%dT%H:%M:%S.%f')
+                if key != '__class__':
                     setattr(self, key, value)
 
     def __str__(self):
@@ -53,11 +46,7 @@ class BaseModel:
         new_dict['__class__'] = self.__class__.__name__
         new_dict['created_at'] = self.created_at.isoformat()
         new_dict['updated_at'] = self.updated_at.isoformat()
-        
-        # Remove SQLAlchemy-specific attribute if it exists
-        if '_sa_instance_state' in new_dict:
-            del new_dict['_sa_instance_state']
-            
+        new_dict.pop('_sa_instance_state', None)
         return new_dict
 
     def delete(self):
