@@ -29,23 +29,26 @@ class Place(BaseModel, Base):
     price_by_night = Column(Integer, nullable=False, default=0)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    amenity_ids = []
     
-    # Relationships for DBStorage
+    # For FileStorage
+    amenity_ids = []
+
+    # Conditional relationships based on storage type
     if getenv('HBNB_TYPE_STORAGE') == 'db':
         reviews = relationship("Review", backref="place", cascade="all, delete-orphan")
         amenities = relationship("Amenity", secondary=place_amenity, back_populates="place_amenities")
-    else:
-        # Getter for FileStorage
+    
+    # FileStorage properties
+    if getenv('HBNB_TYPE_STORAGE') != 'db':
         @property
         def reviews(self):
             """Returns list of Review instances with place_id equals to current Place.id"""
             from models import storage
             review_list = []
-            all_reviews = storage.all("Review")
-            for review in all_reviews.values():
-                if review.place_id == self.id:
-                    review_list.append(review)
+            all_reviews = storage.all()
+            for obj in all_reviews.values():
+                if obj.__class__.__name__ == "Review" and obj.place_id == self.id:
+                    review_list.append(obj)
             return review_list
         
         @property
@@ -53,14 +56,15 @@ class Place(BaseModel, Base):
             """Returns list of Amenity instances linked to Place"""
             from models import storage
             amenity_list = []
-            all_amenities = storage.all("Amenity")
-            for amenity in all_amenities.values():
-                if amenity.id in self.amenity_ids:
-                    amenity_list.append(amenity)
+            all_amenities = storage.all()
+            for obj in all_amenities.values():
+                if obj.__class__.__name__ == "Amenity" and obj.id in self.amenity_ids:
+                    amenity_list.append(obj)
             return amenity_list
         
         @amenities.setter
         def amenities(self, obj):
             """Setter for amenities in FileStorage"""
             if obj.__class__.__name__ == "Amenity":
-                self.amenity_ids.append(obj.id)
+                if obj.id not in self.amenity_ids:
+                    self.amenity_ids.append(obj.id)
