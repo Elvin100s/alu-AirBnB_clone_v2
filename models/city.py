@@ -1,27 +1,16 @@
 #!/usr/bin/python3
-"""Complete City implementation"""
+"""This module defines a class City"""
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.orm import relationship
-from os import getenv
+
 
 class City(BaseModel, Base):
-    """City class with dual storage support"""
+    """Representation of City"""
     __tablename__ = 'cities'
     
-    name = Column(String(128), nullable=False)
     state_id = Column(String(60), ForeignKey('states.id'), nullable=False)
+    name = Column(String(128), nullable=False)
     
-    if getenv('HBNB_TYPE_STORAGE') == 'db':
-        places = relationship("Place", backref="cities", cascade="all, delete-orphan")
-    else:
-        @property
-        def places(self):
-            """FileStorage places getter"""
-            from models import storage
-            return [place for place in storage.all(Place).values() 
-                    if place.city_id == self.id]
-
-    def __init__(self, *args, **kwargs):
-        """Initialize City"""
-        super().__init__(*args, **kwargs)
+    # Relationship with Place - cascade delete when City is deleted
+    places = relationship("Place", backref="city", cascade="all, delete-orphan")
