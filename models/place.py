@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-"""
-Place Module
-"""
+"""Place Module"""
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, Table
 from sqlalchemy.orm import relationship
@@ -9,6 +7,7 @@ import models
 from os import getenv
 
 
+<<<<<<< HEAD
 # Association table for many-to-many relationship between Place and Amenity
 place_amenity = Table('place_amenity', Base.metadata,
                       Column(
@@ -18,6 +17,26 @@ place_amenity = Table('place_amenity', Base.metadata,
                           primary_key=True,
                           nullable=False),
                       Column('amenity_id', String(60), ForeignKey('amenities.id'), primary_key=True, nullable=False))
+=======
+place_amenity = Table(
+    'place_amenity',
+    Base.metadata,
+    Column(
+        'place_id',
+        String(60),
+        ForeignKey('places.id'),
+        primary_key=True,
+        nullable=False
+    ),
+    Column(
+        'amenity_id',
+        String(60),
+        ForeignKey('amenities.id'),
+        primary_key=True,
+        nullable=False
+    )
+)
+>>>>>>> a1a7597a2c04a4f2c17ec7dabcbd2bca01cee907
 
 
 class Place(BaseModel, Base):
@@ -36,43 +55,71 @@ class Place(BaseModel, Base):
     longitude = Column(Float, nullable=True)
     amenity_ids = []
 
+<<<<<<< HEAD
     # For DBStorage
+=======
+>>>>>>> a1a7597a2c04a4f2c17ec7dabcbd2bca01cee907
     if getenv('HBNB_TYPE_STORAGE') == 'db':
         reviews = relationship(
             "Review",
             backref="place",
+<<<<<<< HEAD
             cascade="all, delete-orphan")
         amenities = relationship(
             "Amenity",
             secondary=place_amenity,
             back_populates="place_amenities")
+=======
+            cascade="all, delete-orphan"
+        )
+        amenities = relationship(
+            "Amenity",
+            secondary=place_amenity,
+            viewonly=False
+        )
+>>>>>>> a1a7597a2c04a4f2c17ec7dabcbd2bca01cee907
     else:
-        # For FileStorage
         @property
         def reviews(self):
-            """Returns list of Review instances with place_id equals to current Place.id"""
+            """Get linked Reviews"""
             from models import storage
+<<<<<<< HEAD
             review_list = []
             all_reviews = storage.all()
             for obj in all_reviews.values():
                 if obj.__class__.__name__ == "Review" and obj.place_id == self.id:
                     review_list.append(obj)
             return review_list
+=======
+            return [
+                obj for obj in storage.all().values()
+                if obj.__class__.__name__ == "Review"
+                and obj.place_id == self.id
+            ]
+>>>>>>> a1a7597a2c04a4f2c17ec7dabcbd2bca01cee907
 
         @property
         def amenities(self):
-            """Returns list of Amenity instances linked to Place"""
+            """Get linked Amenities"""
             from models import storage
+<<<<<<< HEAD
             amenity_list = []
             all_amenities = storage.all()
             for obj in all_amenities.values():
                 if obj.__class__.__name__ == "Amenity" and obj.id in self.amenity_ids:
                     amenity_list.append(obj)
             return amenity_list
+=======
+            return [
+                obj for obj in storage.all().values()
+                if obj.__class__.__name__ == "Amenity"
+                and obj.id in self.amenity_ids
+            ]
+>>>>>>> a1a7597a2c04a4f2c17ec7dabcbd2bca01cee907
 
         @amenities.setter
         def amenities(self, obj):
-            """Setter for amenities in FileStorage"""
+            """Add Amenity ID to amenity_ids"""
             if obj.__class__.__name__ == "Amenity":
                 if obj.id not in self.amenity_ids:
                     self.amenity_ids.append(obj.id)
