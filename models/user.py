@@ -8,7 +8,6 @@ from sqlalchemy.orm import relationship
 class User(BaseModel, Base):
     """User class"""
     __tablename__ = 'users'
-
     
     email = Column(String(128), nullable=False)
     password = Column(String(128), nullable=False)
@@ -26,4 +25,3 @@ class User(BaseModel, Base):
         backref="user",
         cascade="all, delete-orphan"
     )
-
