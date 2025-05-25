@@ -9,11 +9,14 @@ import os
 class City(BaseModel, Base):
     """Representation of City"""
     __tablename__ = 'cities'
-    
+
     state_id = Column(String(60), ForeignKey('states.id'), nullable=False)
     name = Column(String(128), nullable=False)
-    
-    places = relationship("Place", backref="cities", cascade="all, delete-orphan")
+
+    places = relationship(
+        "Place",
+        backref="cities",
+        cascade="all, delete-orphan")
 
     if os.getenv('HBNB_TYPE_STORAGE') != 'db':
         state_id = ""
