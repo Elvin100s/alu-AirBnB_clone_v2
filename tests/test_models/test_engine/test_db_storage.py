@@ -31,4 +31,4 @@ class TestDBStorage(unittest.TestCase):
         )
         user.save()
         self.assertIn("User.{}".format(user.id), self.storage.all().keys())
-        self.assertEqual(us
+        self.assertEqual(us.name, "Chyna")
