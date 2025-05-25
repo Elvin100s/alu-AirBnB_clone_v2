@@ -3,24 +3,21 @@
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
-import models
+import os
 
 
 class User(BaseModel, Base):
     """Representation of a user"""
-    if models.storage_type == "db":
-        __tablename__ = 'users'
-        
-        email = Column(String(128), nullable=False)
-        password = Column(String(128), nullable=False)
-        first_name = Column(String(128), nullable=True)
-        last_name = Column(String(128), nullable=True)
-        
-        # Relationship with Place - cascade delete when User is deleted
-        places = relationship("Place", backref="user", cascade="all, delete-orphan")
-        # Relationship with reviews (if you have a Review model)
-        # reviews = relationship("Review", backref="user", cascade="all, delete-orphan")
-    else:
+    __tablename__ = 'users'
+    
+    email = Column(String(128), nullable=False)
+    password = Column(String(128), nullable=False)
+    first_name = Column(String(128), nullable=True)
+    last_name = Column(String(128), nullable=True)
+    
+    places = relationship("Place", backref="user", cascade="all, delete-orphan")
+
+    if os.getenv('HBNB_TYPE_STORAGE') != 'db':
         email = ""
         password = ""
         first_name = ""
