@@ -29,17 +29,14 @@ class Place(BaseModel, Base):
     price_by_night = Column(Integer, nullable=False, default=0)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    
-    # For FileStorage
     amenity_ids = []
-
-    # Conditional relationships based on storage type
+    
+    # For DBStorage
     if getenv('HBNB_TYPE_STORAGE') == 'db':
         reviews = relationship("Review", backref="place", cascade="all, delete-orphan")
         amenities = relationship("Amenity", secondary=place_amenity, back_populates="place_amenities")
-    
-    # FileStorage properties
-    if getenv('HBNB_TYPE_STORAGE') != 'db':
+    else:
+        # For FileStorage
         @property
         def reviews(self):
             """Returns list of Review instances with place_id equals to current Place.id"""
