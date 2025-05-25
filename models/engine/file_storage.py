@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+"""This module defines a class to manage file storage for hbnb clone"""
 from models.base_model import BaseModel
 from models.user import User
 from models.state import State
@@ -10,7 +12,7 @@ import json
 
 class FileStorage:
     """Serializes instances to a JSON file and deserializes back to instances"""
-    
+
     __file_path = "file.json"
     __objects = {}
 
