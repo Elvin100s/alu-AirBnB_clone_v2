@@ -1,13 +1,14 @@
 #!/usr/bin/python3
-"""This module defines a class User"""
+"""
+User Module
+"""
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
-import os
 
 
 class User(BaseModel, Base):
-    """Representation of a user"""
+    """User class"""
     __tablename__ = 'users'
     
     email = Column(String(128), nullable=False)
@@ -15,10 +16,8 @@ class User(BaseModel, Base):
     first_name = Column(String(128), nullable=True)
     last_name = Column(String(128), nullable=True)
     
+    # Relationship with Place for DBStorage
     places = relationship("Place", backref="user", cascade="all, delete-orphan")
-
-    if os.getenv('HBNB_TYPE_STORAGE') != 'db':
-        email = ""
-        password = ""
-        first_name = ""
-        last_name = ""
+    
+    # Relationship with Review for DBStorage
+    reviews = relationship("Review", backref="user", cascade="all, delete-orphan")
