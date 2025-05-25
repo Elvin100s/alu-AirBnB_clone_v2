@@ -13,4 +13,4 @@ class City(BaseModel, Base):
     name = Column(String(128), nullable=False)
     
     # Relationship with Place - cascade delete when City is deleted
-    places = relationship("Place", backref="city", cascade="all, delete-orphan")
+    places = relationship("Place", backref="cities", cascade="all, delete-orphan")
