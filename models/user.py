@@ -27,5 +27,3 @@ class User(BaseModel, Base):
         cascade="all, delete-orphan"
     )
 
-
-# Make sure there are two blank lines after class definition
