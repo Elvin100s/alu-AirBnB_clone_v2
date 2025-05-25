@@ -1,27 +1,32 @@
 #!/usr/bin/python3
-"""User class implementation for AirBnB clone"""
+"""User class with complete functionality"""
 from models.base_model import BaseModel, Base
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
-
+from os import getenv
 
 class User(BaseModel, Base):
-    """User class that represents a user in the system
-    
-    Attributes:
-        __tablename__ (str): MySQL table name
-        email (sqlalchemy.String): user's email (required, max 128 chars)
-        password (sqlalchemy.String): user's password (required, max 128 chars)
-        first_name (sqlalchemy.String): optional first name (max 128 chars)
-        last_name (sqlalchemy.String): optional last name (max 128 chars)
-    """
+    """User class with dual storage support"""
     __tablename__ = 'users'
     
-    email = Column(String(128), nullable=False)
-    password = Column(String(128), nullable=False)
-    first_name = Column(String(128), nullable=True)
-    last_name = Column(String(128), nullable=True)
-    
+    if getenv('HBNB_TYPE_STORAGE') == 'db':
+        email = Column(String(128), nullable=False)
+        password = Column(String(128), nullable=False)
+        first_name = Column(String(128), nullable=True)
+        last_name = Column(String(128), nullable=True)
+        places = relationship("Place", backref="user", cascade="all, delete-orphan")
+        reviews = relationship("Review", backref="user", cascade="all, delete-orphan")
+    else:
+        email = ""
+        password = ""
+        first_name = ""
+        last_name = ""
+
     def __init__(self, *args, **kwargs):
-        """Initialize User instance"""
+        """Initialize User with storage-appropriate attributes"""
         super().__init__(*args, **kwargs)
+        if getenv('HBNB_TYPE_STORAGE') != 'db':
+            self.email = kwargs.get('email', "")
+            self.password = kwargs.get('password', "")
+            self.first_name = kwargs.get('first_name', "")
+            self.last_name = kwargs.get('last_name', "")
