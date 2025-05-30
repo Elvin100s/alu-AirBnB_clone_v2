@@ -3,9 +3,8 @@
 Fabric script that distributes an archive to web servers
 """
 
-from fabric.api import env, put, run, local
+from fabric.api import env, put, run
 import os
-from datetime import datetime
 
 # Set the hosts and user for deployment
 env.user = 'ubuntu'
@@ -22,37 +21,37 @@ def do_deploy(archive_path):
     Returns:
         bool: True if all operations succeed, False otherwise
     """
-    # Check if the archive file exists
+    # Return False if file doesn't exist
     if not os.path.isfile(archive_path):
         return False
     
     try:
-        # Extract filename from path and remove .tgz extension
+        # Get filename and name without extension
         filename = os.path.basename(archive_path)
-        name_no_ext = filename.replace('.tgz', '')
-        release_path = "/data/web_static/releases/{}/".format(name_no_ext)
-        tmp_path = "/tmp/{}".format(filename)
+        name_no_ext = filename.split('.')[0]
         
-        # Upload the archive to /tmp/ directory of the web server
+        # Define paths
+        tmp_path = "/tmp/{}".format(filename)
+        release_path = "/data/web_static/releases/{}/".format(name_no_ext)
+        
+        # Upload archive to /tmp/
         put(archive_path, tmp_path)
         
-        # Create the releases directory if it doesn't exist
+        # Create release directory
         run("mkdir -p {}".format(release_path))
         
-        # Uncompress the archive to the releases folder
+        # Extract archive
         run("tar -xzf {} -C {}".format(tmp_path, release_path))
         
-        # Delete the archive from the web server
+        # Delete archive from server
         run("rm {}".format(tmp_path))
         
-        # Move files from web_static subdirectory to the release directory
-        run("mv {}web_static/* {} 2>/dev/null || true".format(
-            release_path, release_path))
+        # Handle web_static subdirectory if it exists
+        web_static_dir = "{}web_static".format(release_path)
+        run("if [ -d {} ]; then mv {}/* {} && rm -rf {}; fi".format(
+            web_static_dir, web_static_dir, release_path, web_static_dir))
         
-        # Remove the now empty web_static directory
-        run("rm -rf {}web_static".format(release_path))
-        
-        # Delete the current symbolic link
+        # Remove current symbolic link
         run("rm -rf /data/web_static/current")
         
         # Create new symbolic link
