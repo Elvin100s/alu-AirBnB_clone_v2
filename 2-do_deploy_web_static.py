@@ -1,10 +1,8 @@
 from fabric.api import env, put, run
 import os
 
-# Fabric environment setup with your actual server IPs
 env.user = 'ubuntu'
 env.hosts = ['44.202.60.165', '44.202.132.51']
-
 
 def do_deploy(archive_path):
     """Deploys an archive to the web servers."""
@@ -20,7 +18,8 @@ def do_deploy(archive_path):
         # Upload the archive to /tmp/
         put(archive_path, tmp_path)
 
-        # Create the release directory
+        # Remove existing release folder if it exists to avoid mv conflict
+        run(f"rm -rf {release_path}")
         run(f"mkdir -p {release_path}")
 
         # Uncompress the archive to the release directory
