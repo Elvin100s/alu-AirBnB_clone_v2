@@ -1,43 +1,59 @@
 #!/usr/bin/python3
-from fabric.api import env, put, run, local
-from os.path import exists
-from datetime import datetime
+"""
+Fabric script based on the file 1-pack_web_static.py that distributes an
+archive to the web servers
+"""
 
-# Server configuration
-env.hosts = ['44.202.60.165', '44.202.132.51']
-env.user = 'ubuntu'  # The username you use to SSH
-env.key_filename = '~/.ssh/school'  # Path to your private key
+from fabric.api import put, run, env
+from os.path import exists
+#!/usr/bin/python3
+"""
+Fabric script based on the file 1-pack_web_static.py that distributes an
+archive to the web servers
+"""
+
+from fabric.api import put, run, env
+from os.path import exists
+env.hosts = ['34.227.11.202', '52.90.153.53']
+
 
 def do_deploy(archive_path):
-    """Distributes an archive to web servers"""
-    if not exists(archive_path):
+    """distributes an archive to the web servers"""
+    if exists(archive_path) is False:
+        return False
+    try:
+        file_n = archive_path.split("/")[-1]
+        no_ext = file_n.split(".")[0]
+        path = "/data/web_static/releases/"
+        put(archive_path, '/tmp/')
+        run('mkdir -p {}{}/'.format(path, no_ext))
+        run('tar -xzf /tmp/{} -C {}{}/'.format(file_n, path, no_ext))
+        run('rm /tmp/{}'.format(file_n))
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, no_ext))
+        run('rm -rf {}{}/web_static'.format(path, no_ext))
+        run('rm -rf /data/web_static/current')
+        run('ln -s {}{}/ /data/web_static/current'.format(path, no_ext))
+        return True
+    except:
         return False
 
+
+def do_deploy(archive_path):
+    """distributes an archive to the web servers"""
+    if exists(archive_path) is False:
+        return False
     try:
-        # Upload the archive to /tmp/ on server
+        file_n = archive_path.split("/")[-1]
+        no_ext = file_n.split(".")[0]
+        path = "/data/web_static/releases/"
         put(archive_path, '/tmp/')
-
-        # Extract filename and create target directory
-        file_name = archive_path.split('/')[-1]
-        base_name = file_name.replace('.tgz', '')
-        release_path = f'/data/web_static/releases/{base_name}'
-
-        # Create directory and extract archive
-        run(f'mkdir -p {release_path}')
-        run(f'tar -xzf /tmp/{file_name} -C {release_path}')
-
-        # Move files and clean up
-        run(f'mv {release_path}/web_static/* {release_path}/')
-        run(f'rm -rf {release_path}/web_static')
-        run(f'rm /tmp/{file_name}')
-
-        # Update symbolic link
+        run('mkdir -p {}{}/'.format(path, no_ext))
+        run('tar -xzf /tmp/{} -C {}{}/'.format(file_n, path, no_ext))
+        run('rm /tmp/{}'.format(file_n))
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, no_ext))
+        run('rm -rf {}{}/web_static'.format(path, no_ext))
         run('rm -rf /data/web_static/current')
-        run(f'ln -s {release_path} /data/web_static/current')
-
-        print("New version deployed!")
+        run('ln -s {}{}/ /data/web_static/current'.format(path, no_ext))
         return True
-
-    except Exception as e:
-        print(f"Deployment failed: {e}")
+    except:
         return False
